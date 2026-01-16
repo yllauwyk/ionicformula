@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ion Quiz - Infinite Level Up</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f7f6;
+            --danger: #e74c3c;
+            --success: #27ae60;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #sky {
+            flex: 0 0 70%; 
+            position: relative;
+            background: linear-gradient(to bottom, #dbe9f4, #ffffff);
+            overflow: hidden;
+            border-bottom: 4px solid var(--primary);
+        }
+
+        #ui-panel {
+            flex: 0 0 30%;
+            background: var(--primary);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+        }
+
+        .block {
+            position: absolute;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-weight: bold;
+            color: var(--primary);
+            border: 2px solid var(--accent);
+            white-space: nowrap;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 100;
+            text-align: center;
+        }
+
+        #correct-box { 
+            background: white; color: var(--primary); 
+            padding: 20px; border-radius: 10px; margin: 20px;
+            border: 4px solid var(--danger);
+        }
+
+        #level-up-toast {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: none;
+            z-index: 50;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
+
+        #current-input {
+            background: white;
+            height: 50px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .keypad-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        button {
+            padding: 8px 12px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            background: #ecf0f1;
+            font-weight: bold;
+            touch-action: manipulation;
+            min-width: 44px;
+        }
+
+        button:active { background: var(--accent); color: white; }
+        .btn-action { background: var(--success); color: white; min-width: 100px; }
+        .btn-clear { background: var(--danger); color: white; }
+        .btn-sub { background: #d0e4f2; color: #2980b9; }
+        .btn-super { background: #ebdef0; color: #8e44ad; }
+
+        sub { font-size: 0.6em; vertical-align: sub; }
+        sup { font-size: 0.6em; vertical-align: super; }
+
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 15px;
+            border-radius: 15px;
+            border: 1px solid var(--accent);
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="sky">
+        <div id="score-board">Score: <span id="score">0</span> | Speed: <span id="speed-pct">100%</span></div>
+        <div id="level-up-toast">LEVEL UP! SPEED INCREASED!</div>
+        
+        <div id="overlay">
+            <h2 style="color: var(--danger); font-size: 2.5rem;">GAME OVER</h2>
+            <div id="correct-box">
+                <div id="missed-name" style="font-size: 1.2rem;"></div>
+                <div id="missed-formula" style="font-size: 3rem; font-weight: bold; margin-top: 10px;"></div>
+            </div>
+            <button onclick="restartGame()" style="background: var(--success); color: white; padding: 15px 50px; border-radius: 30px; font-size: 1.5rem; border: none; font-weight: bold;">REPLAY</button>
+        </div>
+    </div>
+
+    <div id="ui-panel">
+        <div id="current-input"><span id="display-area"></span></div>
+        
+        <div class="keypad-row">
+            <button onclick="addPart('H')">H</button>
+            <button onclick="addPart('C')">C</button>
+            <button onclick="addPart('N')">N</button>
+            <button onclick="addPart('O')">O</button>
+            <button onclick="addPart('Na')">Na</button>
+            <button onclick="addPart('Mg')">Mg</button>
+            <button onclick="addPart('Al')">Al</button>
+            <button onclick="addPart('P')">P</button>
+            <button onclick="addPart('S')">S</button>
+            <button onclick="addPart('Cl')">Cl</button>
+            <button onclick="addPart('K')">K</button>
+            <button onclick="addPart('Ca')">Ca</button>
+            <button onclick="addPart('Cr')">Cr</button>
+            <button onclick="addPart('Mn')">Mn</button>
+            <button onclick="addPart('Fe')">Fe</button>
+            <button onclick="addPart('Cu')">Cu</button>
+            <button onclick="addPart('Zn')">Zn</button>
+            <button onclick="addPart('Br')">Br</button>
+            <button onclick="addPart('Ag')">Ag</button>
+            <button onclick="addPart('I')">I</button>
+            <button onclick="addPart('Hg')">Hg</button>
+            <button onclick="addPart('Pb')">Pb</button>
+        </div>
+
+        <div class="keypad-row">
+            <button class="btn-sub" onclick="addPart('2', 'sub')">sub 2</button>
+            <button class="btn-sub" onclick="addPart('3', 'sub')">sub 3</button>
+            <button class="btn-sub" onclick="addPart('4', 'sub')">sub 4</button>
+            <button class="btn-sub" onclick="addPart('7', 'sub')">sub 7</button>
+            <button class="btn-super" onclick="addPart('+', 'sup')">+</button>
+            <button class="btn-super" onclick="addPart('-', 'sup')">-</button>
+            <button class="btn-super" onclick="addPart('2+', 'sup')">2+</button>
+            <button class="btn-super" onclick="addPart('2-', 'sup')">2-</button>
+            <button class="btn-super" onclick="addPart('3+', 'sup')">3+</button>
+            <button class="btn-super" onclick="addPart('3-', 'sup')">3-</button>
+            <button class="btn-clear" onclick="clearInput()">CLEAR</button>
+            <button class="btn-action" onclick="checkAnswer()">SUBMIT</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const START_SPEED = 0.9;
+    let currentFallSpeed = START_SPEED;
+
+    const ionData = [
+        {name: "Sodium ion", formula: "Na^+"}, {name: "Potassium ion", formula: "K^+"},
+        {name: "Silver ion", formula: "Ag^+"}, {name: "Hydrogen ion", formula: "H^+"},
+        {name: "Ammonium ion", formula: "NH_4^+"}, {name: "Calcium ion", formula: "Ca^2+"},
+        {name: "Magnesium ion", formula: "Mg^2+"}, {name: "Zinc ion", formula: "Zn^2+"},
+        {name: "Iron(II) ion", formula: "Fe^2+"}, {name: "Copper(II) ion", formula: "Cu^2+"},
+        {name: "Lead(II) ion", formula: "Pb^2+"}, {name: "Mercury(II) ion", formula: "Hg^2+"},
+        {name: "Aluminium ion", formula: "Al^3+"}, {name: "Iron(III) ion", formula: "Fe^3+"},
+        {name: "Chloride ion", formula: "Cl^-"}, {name: "Bromide ion", formula: "Br^-"},
+        {name: "Iodide ion", formula: "I^-"}, {name: "Nitrite ion", formula: "NO_2^-"},
+        {name: "Nitrate ion", formula: "NO_3^-"}, {name: "Hydroxide ion", formula: "OH^-"},
+        {name: "Hydrogencarbonate ion", formula: "HCO_3^-"}, {name: "Hydrogensulphate ion", formula: "HSO_4^-"},
+        {name: "Permanganate ion", formula: "MnO_4^-"}, {name: "Oxide ion", formula: "O^2-"},
+        {name: "Sulphide ion", formula: "S^2-"}, {name: "Sulphite ion", formula: "SO_3^2-"},
+        {name: "Sulphate ion", formula: "SO_4^2-"}, {name: "Carbonate ion", formula: "CO_3^2-"},
+        {name: "Dichromate ion", formula: "Cr_2O_7^2-"}, {name: "Nitride ion", formula: "N^3-"},
+        {name: "Phosphate ion", formula: "PO_4^3-"}
+    ];
+
+    let currentFormulaRaw = ""; 
+    let score = 0;
+    let activeBlocks = [];
+    let isPaused = false;
+
+    const sky = document.getElementById('sky');
+    const displayArea = document.getElementById('display-area');
+    const scoreDisplay = document.getElementById('score');
+    const speedDisplay = document.getElementById('speed-pct');
+    const toast = document.getElementById('level-up-toast');
+    const overlay = document.getElementById('overlay');
+
+    function formatToHTML(raw) {
+        return raw.replace(/_(\d+)/g, '<sub>$1</sub>').replace(/\^([0-9\+-]+)/g, '<sup>$1</sup>');
+    }
+
+    function updateDisplay() { displayArea.innerHTML = formatToHTML(currentFormulaRaw); }
+
+    function addPart(val, type) {
+        if(isPaused) return;
+        if(type === 'sub') currentFormulaRaw += "_" + val;
+        else if(type === 'sup') currentFormulaRaw += "^" + val;
+        else currentFormulaRaw += val;
+        updateDisplay();
+    }
+
+    function clearInput() { currentFormulaRaw = ""; updateDisplay(); }
+
+    function spawnBlock() {
+        if(isPaused) return;
+        const ion = ionData[Math.floor(Math.random() * ionData.length)];
+        const block = document.createElement('div');
+        block.className = 'block';
+        block.innerText = ion.name;
+        const x = Math.random() * (sky.clientWidth - 160);
+        block.style.left = Math.max(10, x) + 'px';
+        block.style.top = '-50px';
+        sky.appendChild(block);
+        activeBlocks.push({ element: block, y: -50, formula: ion.formula, name: ion.name });
+    }
+
+    function gameLoop() {
+        if(isPaused) return;
+        for (let i = activeBlocks.length - 1; i >= 0; i--) {
+            let b = activeBlocks[i];
+            b.y += currentFallSpeed;
+            b.element.style.top = b.y + 'px';
+            if (b.y > sky.clientHeight - 40) { endGame(b); break; }
+        }
+    }
+
+    function checkAnswer() {
+        if(isPaused) return;
+        let matched = false;
+        for (let i = activeBlocks.length - 1; i >= 0; i--) {
+            if (activeBlocks[i].formula === currentFormulaRaw) {
+                sky.removeChild(activeBlocks[i].element);
+                activeBlocks.splice(i, 1);
+                score += 10;
+                scoreDisplay.innerText = score;
+                handleLevelUp();
+                matched = true;
+            }
+        }
+        if (matched) clearInput();
+    }
+
+    function handleLevelUp() {
+        let oldSpeed = currentFallSpeed;
+        
+        // Dynamic Logic: 10% increase for every 100 points
+        let levelsEarned = Math.floor(score / 100);
+        currentFallSpeed = START_SPEED * (1 + (levelsEarned * 0.1));
+        
+        let speedPct = 100 + (levelsEarned * 10);
+        speedDisplay.innerText = speedPct + "%";
+
+        // Show toast notification if we hit exactly a multiple of 100
+        if (currentFallSpeed > oldSpeed) {
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+    }
+
+    function endGame(missedIon) {
+        isPaused = true;
+        overlay.style.display = 'flex';
+        document.getElementById('missed-name').innerText = "The correct formula for " + missedIon.name + " is:";
+        document.getElementById('missed-formula').innerHTML = formatToHTML(missedIon.formula);
+    }
+
+    function restartGame() {
+        activeBlocks.forEach(b => { if(b.element.parentNode) sky.removeChild(b.element); });
+        activeBlocks = [];
+        score = 0;
+        currentFallSpeed = START_SPEED;
+        scoreDisplay.innerText = "0";
+        speedDisplay.innerText = "100%";
+        clearInput();
+        isPaused = false;
+        overlay.style.display = 'none';
+    }
+
+    setInterval(spawnBlock, 4500);
+    setInterval(gameLoop, 20);
+</script>
+</body>
+</html>
